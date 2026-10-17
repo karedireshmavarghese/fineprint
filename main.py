@@ -181,7 +181,7 @@ def bills(req: Request):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "key_set": bool(os.getenv("ANTHROPIC_API_KEY"))}
 
 
 @app.post("/api/extract")
@@ -203,7 +203,6 @@ async def extract(file: UploadFile = File(...)):
         return {"items": json.loads(text)["items"]}
     except Exception:
         raise HTTPException(422, "Could not read the bill. Try a clearer photo.")
-
 
 
 import math
@@ -263,8 +262,11 @@ def medicine(m: Med):
               'Return ONLY JSON: {"known":true,"salts":[{"name":"","strength":""}],"generic_name":"","form":""}. '
               'Give only the active ingredient(s), strength and form. Do NOT give prices. '
               'If you are not sure what this product is, return {"known":false}.')
-    msg = Anthropic(api_key=key).messages.create(model=os.getenv("MODEL", "claude-sonnet-5-5"), max_tokens=400,
-                                                 messages=[{"role": "user", "content": prompt}])
+    try:
+        msg = Anthropic(api_key=key).messages.create(model=os.getenv("MODEL", "claude-sonnet-5-5"), max_tokens=400,
+                                                     messages=[{"role": "user", "content": prompt}])
+    except Exception as e:
+        raise HTTPException(502, "AI error: " + str(e)[:200])
     text = msg.content[0].text.strip().strip("`").removeprefix("json").strip()
     try:
         d = json.loads(text)
