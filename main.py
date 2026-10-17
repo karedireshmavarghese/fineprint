@@ -205,4 +205,72 @@ async def extract(file: UploadFile = File(...)):
         raise HTTPException(422, "Could not read the bill. Try a clearer photo.")
 
 
+
+import math
+UA = {"User-Agent": "Fineprint-hackathon/1.0"}
+KINDS = {
+    "stay": '[tourism~"^(hotel|guest_house|hostel|motel|apartment)$"]',
+    "food": '[amenity~"^(restaurant|cafe|fast_food)$"]',
+    "pharmacy": '[amenity="pharmacy"]',
+}
+
+
+def km(a1, o1, a2, o2):
+    p = math.pi / 180
+    h = math.sin((a2 - a1) * p / 2) ** 2 + math.cos(a1 * p) * math.cos(a2 * p) * math.sin((o2 - o1) * p / 2) ** 2
+    return 12742 * math.asin(math.sqrt(h))
+
+
+@app.get("/api/nearby")
+def nearby(lat: float, lon: float, kind: str):
+    if kind not in KINDS:
+        raise HTTPException(422, "Unknown place type.")
+    q = f"[out:json][timeout:20];nwr(around:1500,{lat},{lon}){KINDS[kind]}[name];out center 40;"
+    try:
+        r = httpx.post("https://overpass-api.de/api/interpreter", data={"data": q}, headers=UA, timeout=30)
+        r.raise_for_status()
+        els = r.json()["elements"]
+    except Exception:
+        raise HTTPException(502, "Nearby search is busy. Wait a few seconds and try again.")
+    out = []
+    for e in els:
+        la = e.get("lat") or (e.get("center") or {}).get("lat")
+        lo = e.get("lon") or (e.get("center") or {}).get("lon")
+        if la is None or lo is None:
+            continue
+        t = e["tags"]
+        out.append({"name": t["name"], "type": (t.get("tourism") or t.get("amenity") or "").replace("_", " "),
+                    "km": round(km(lat, lon, la, lo), 2), "phone": t.get("phone") or t.get("contact:phone"),
+                    "hours": t.get("opening_hours"), "lat": la, "lon": lo})
+    out.sort(key=lambda x: x["km"])
+    return {"results": out[:10]}
+
+
+class Med(BaseModel):
+    name: str
+
+
+@app.post("/api/medicine")
+def medicine(m: Med):
+    name = m.name.strip()
+    if len(name) < 2 or len(name) > 80:
+        raise HTTPException(422, "Type the medicine name from your bill.")
+    key = os.getenv("ANTHROPIC_API_KEY")
+    if not key:
+        raise HTTPException(503, "Medicine lookup needs ANTHROPIC_API_KEY. Add it in Render under Environment.")
+    from anthropic import Anthropic
+    prompt = ('A patient in India has this medicine name on a hospital bill: "' + name + '". '
+              'Return ONLY JSON: {"known":true,"salts":[{"name":"","strength":""}],"generic_name":"","form":""}. '
+              'Give only the active ingredient(s), strength and form. Do NOT give prices. '
+              'If you are not sure what this product is, return {"known":false}.')
+    msg = Anthropic(api_key=key).messages.create(model=os.getenv("MODEL", "claude-sonnet-5-5"), max_tokens=400,
+                                                 messages=[{"role": "user", "content": prompt}])
+    text = msg.content[0].text.strip().strip("`").removeprefix("json").strip()
+    try:
+        d = json.loads(text)
+    except Exception:
+        raise HTTPException(422, "Could not identify this medicine. Check the spelling.")
+    return d if d.get("known") else {"known": False}
+
+
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
