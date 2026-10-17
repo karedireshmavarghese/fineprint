@@ -3,232 +3,223 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fineprint: see what your insurer won’t pay before you pay the hospital</title>
+<title>Fineprint: check your hospital bill before you pay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#d9e5e0; --ink:#16263a; --muted:#4a5c6c; --rule:#9fb3aa;
-  --paper:#fcfcf7; --pink:#16263a; --pen:#c4301c;
-  --hl-cap:#ffe45c; --hl-np:#ffb3c1; --hl-dup:#9fe3f2;
-  --btn-bg:#16263a; --btn-fg:#fcfcf7;
-  --sans:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"Spline Sans Mono",ui-monospace,Menlo,Consolas,monospace;
-  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#0e1b19;--ink:#e4efea;--muted:#9bb0a8;--rule:#2f4540;--btn-bg:#e4efea;--btn-fg:#0e1b19;color-scheme:dark}
-}
-:root[data-theme="dark"]{--bg:#0e1b19;--ink:#e4efea;--muted:#9bb0a8;--rule:#2f4540;--btn-bg:#e4efea;--btn-fg:#0e1b19;color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+:root{--bg:#d9e5e0;--ink:#16263a;--muted:#4a5c6c;--rule:#9fb3aa;--field:#fcfcf7;--paper:#fcfcf7;--pen:#c4301c;
+--hl-cap:#ffe45c;--hl-np:#ffb3c1;--hl-dup:#9fe3f2;--btn-bg:#16263a;--btn-fg:#fcfcf7;
+--sans:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Spline Sans Mono",ui-monospace,Menlo,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1b19;--ink:#e4efea;--muted:#9bb0a8;--rule:#2f4540;--field:#16302c;--btn-bg:#e4efea;--btn-fg:#0e1b19;color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;min-height:100%}
-.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
-header{display:flex;justify-content:space-between;align-items:baseline;padding:22px 0}
+html{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;min-height:100%;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 0;flex-wrap:wrap}
 .mark{font-weight:800;font-size:1.35rem;letter-spacing:-.02em}
 .mark span{background:linear-gradient(var(--hl-cap),var(--hl-cap)) 0 88%/100% 38% no-repeat;color:#16263a;padding:0 3px}
-header a{color:var(--ink);font-size:.95rem}
-.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);gap:48px;align-items:start;padding:28px 0 72px}
-h1{font-size:clamp(2.3rem,5.2vw,4rem);line-height:1.02;letter-spacing:-.035em;font-weight:800;margin:0 0 20px;max-width:13ch}
-.lede{font-size:1.15rem;max-width:34ch;color:var(--muted);margin:0 0 28px}
-.btn{font:inherit;font-weight:600;background:var(--btn-bg);color:var(--btn-fg);border:0;border-radius:3px;padding:14px 22px;cursor:pointer}
-.btn:focus-visible,.line:focus-visible,a:focus-visible{outline:3px solid var(--pen);outline-offset:3px}
-.btn[disabled]{opacity:.55;cursor:default}
-.hint{margin:14px 0 0;font-size:.9rem;color:var(--muted)}
-
-/* the bill */
-.bill{background:var(--paper);color:#16263a;font-family:var(--mono);font-size:13px;line-height:1.35;
-  padding:22px 18px 26px;transform:rotate(-1deg);box-shadow:0 1px 0 #0003,0 18px 30px -18px #0007;
-  border-bottom:10px solid transparent;
-  background-image:linear-gradient(135deg,var(--bg) 25%,transparent 25%),linear-gradient(225deg,var(--bg) 25%,transparent 25%);
-  background-size:14px 14px;background-position:0 100%;background-repeat:repeat-x;background-color:var(--paper)}
-.bill-head{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #16263a66;padding-bottom:10px;margin-bottom:6px}
-.bill-head b{font-weight:500;font-size:14px}
-.bill-head span{color:#4a5c6c;text-align:right}
-.cols,.line{display:grid;grid-template-columns:minmax(0,1fr) 74px 74px;gap:8px;align-items:baseline}
+nav{display:flex;gap:10px;align-items:center;font-size:.95rem}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.04;letter-spacing:-.035em;font-weight:800;margin:14px 0 12px;max-width:18ch}
+.lede{color:var(--muted);max-width:50ch;margin:0 0 8px}
+h2{font-size:1.5rem;letter-spacing:-.025em;margin:0 0 6px;font-weight:800}
+section{border-top:1px solid var(--rule);padding:34px 0}
+.sub{color:var(--muted);margin:0 0 16px;font-size:.95rem}
+.btn{font:inherit;font-weight:600;background:var(--btn-bg);color:var(--btn-fg);border:0;border-radius:3px;padding:11px 18px;cursor:pointer}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--ink)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.pick:focus-visible,.line:focus-visible{outline:3px solid var(--pen);outline-offset:2px}
+input,select{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--rule);border-radius:3px;padding:10px 12px;width:100%}
+.row{display:flex;gap:10px}
+.err{color:var(--pen);font-size:.92rem;margin:8px 0 0;min-height:1.2em}
+.pick{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--rule);border-radius:3px;padding:12px 14px;margin-top:8px;cursor:pointer}
+.pick small{display:block;color:var(--muted)}
+.pick .st{margin-top:4px;font-size:.85rem;color:var(--ink)}
+.pick.on{border:2px solid var(--pen)}
+.chosen{margin-top:12px;font-weight:600}
+.lines{display:grid;grid-template-columns:1fr 120px 150px 36px;gap:8px;margin-bottom:8px}
+.pol{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:460px;margin:16px 0}
+.pol label{font-size:.9rem;color:var(--muted)}
+.x{background:none;border:1px solid var(--rule);color:var(--ink);border-radius:3px;cursor:pointer;font-size:1.1rem}
+.bill{background:var(--paper);color:#16263a;font-family:var(--mono);font-size:13px;line-height:1.35;padding:20px 16px 24px;margin-top:22px;box-shadow:0 18px 30px -18px #0007}
+.bill-head{border-bottom:1px dashed #16263a66;padding-bottom:8px;margin-bottom:6px;font-weight:500}
+.cols,.line{display:grid;grid-template-columns:minmax(0,1fr) 80px 80px;gap:8px;align-items:baseline}
 .cols{color:#4a5c6c;padding:4px 6px}
 .cols span:nth-child(n+2),.line span:nth-child(n+2){text-align:right}
-ol{list-style:none;margin:0;padding:0}
-.line{width:100%;font:inherit;color:inherit;text-align:left;background:none;border:0;border-bottom:1px dotted #16263a40;padding:8px 6px;cursor:pointer;
-  background-image:linear-gradient(var(--c,transparent),var(--c,transparent));background-repeat:no-repeat;background-size:0% 100%;
-  transition:background-size .55s cubic-bezier(.3,.7,.2,1)}
-.line.marked{background-size:100% 100%}
-.line.cap{--c:var(--hl-cap)} .line.np{--c:var(--hl-np)} .line.dup{--c:var(--hl-dup)}
+.line{width:100%;font:inherit;color:inherit;text-align:left;border:0;border-bottom:1px dotted #16263a40;padding:8px 6px;cursor:pointer;background:var(--c,transparent)}
+.line.cap{--c:var(--hl-cap)}.line.np{--c:var(--hl-np)}.line.dup{--c:var(--hl-dup)}
 .line.sel{box-shadow:inset 3px 0 0 var(--pen)}
-.pays{visibility:hidden;color:var(--pen);font-weight:500}
-.marked .pays{visibility:visible}
-.marked.cut .billed{text-decoration:line-through;text-decoration-color:var(--pen);text-decoration-thickness:2px}
-.note{margin:14px 0 0;padding:10px 12px;border-left:3px solid var(--pen);background:#c4301c12;font-family:var(--sans);font-size:14px;line-height:1.45;min-height:5.2em}
-.note b{display:block;margin-bottom:2px}
-.verdict{margin-top:14px;border-top:2px solid #16263a;padding-top:10px;font-family:var(--sans);font-size:15px}
-.verdict strong{font-size:1.5rem;letter-spacing:-.02em}
-.verdict .you{color:var(--pen);font-weight:600}
-.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-family:var(--sans);font-size:12.5px;color:#4a5c6c}
-.legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px}
-.fine{margin:10px 0 0;font-family:var(--sans);font-size:12px;color:#4a5c6c}
-
-/* sections */
-section{border-top:1px solid var(--rule);padding:56px 0}
-h2{font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.03em;line-height:1.1;margin:0 0 28px;font-weight:800;max-width:20ch}
-.cuts{display:grid;grid-template-columns:1fr 1fr;gap:0 48px;margin:0}
-.cuts div{display:grid;grid-template-columns:18px 1fr;gap:0 14px;padding:16px 0;border-bottom:1px solid var(--rule)}
-.cuts dt{font-weight:600;grid-column:2}
-.cuts dd{margin:2px 0 0;grid-column:2;color:var(--muted);max-width:44ch}
-.cuts i{grid-column:1;grid-row:1/3;width:18px;height:18px;margin-top:5px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;counter-reset:s;padding:0}
-.steps li{counter-increment:s;border-top:4px solid var(--ink);padding-top:14px}
-.steps li::before{content:counter(s);display:block;font-weight:800;font-size:2.6rem;line-height:1;letter-spacing:-.04em;margin-bottom:10px}
-.steps b{display:block;margin-bottom:4px}
-.steps span{color:var(--muted)}
-.honest{max-width:62ch;color:var(--muted)}
-.honest strong{color:var(--ink)}
-footer{padding:28px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--rule)}
-
-@media (max-width:860px){
-  .hero{grid-template-columns:1fr;gap:36px;padding-bottom:48px}
-  .cuts{grid-template-columns:1fr}
-  .steps{grid-template-columns:1fr;gap:26px}
-  .bill{transform:none}
-}
-@media (max-width:420px){.cols,.line{grid-template-columns:minmax(0,1fr) 62px 62px;gap:4px}.bill{font-size:12px;padding:18px 12px 24px}}
-@media (prefers-reduced-motion:reduce){.line{transition:none}}
+.pays{color:var(--pen);font-weight:500}
+.cut .billed{text-decoration:line-through;text-decoration-color:var(--pen)}
+.note{margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--pen);background:#c4301c12;font-family:var(--sans);font-size:14px;min-height:4.5em}
+.note b{display:block}
+.verdict{margin-top:12px;border-top:2px solid #16263a;padding-top:10px;font-family:var(--sans);font-size:15px}
+.verdict strong{font-size:1.4rem}.you{color:var(--pen);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-family:var(--sans);font-size:12.5px;color:#4a5c6c}
+.legend i{display:inline-block;width:14px;height:10px;margin-right:6px}
+.mine div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule)}
+dialog{border:0;border-radius:4px;padding:24px;width:min(380px,92vw);background:var(--paper);color:#16263a}
+dialog::backdrop{background:#0008}
+dialog h3{margin:0 0 12px;font-size:1.3rem}
+dialog input{margin-bottom:10px;color:#16263a;background:#fff}
+dialog .link{background:none;border:0;color:#16263a;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+footer{padding:24px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--rule)}
+@media (max-width:640px){.lines{grid-template-columns:1fr 1fr 36px}.lines select{grid-column:1/3}.row{flex-direction:column}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="mark"><span>Fineprint</span></div>
-    <a href="#how">How it works</a>
-  </header>
+<header><div class="mark"><span>Fineprint</span></div><nav id="nav"></nav></header>
+<h1>Check your hospital bill before you pay it.</h1>
+<p class="lede">Pick your hospital, enter the bill and your policy limits, and see which lines your insurer is likely to cut and why.</p>
 
-  <main>
-  <div class="hero">
-    <div>
-      <h1>See what your insurer won’t pay before you pay the hospital.</h1>
-      <p class="lede">Photograph the final bill, add your policy, and get the bill back with every cut marked and explained.</p>
-      <button class="btn" id="go">Mark up the sample bill</button>
-      <p class="hint" id="hint">Then tap any line to see why it was marked.</p>
-    </div>
+<section>
+  <h2>1. Find your hospital</h2>
+  <p class="sub">Search by hospital name. Results come from OpenStreetMap, so small hospitals may be missing.</p>
+  <div class="row"><input id="q" placeholder="Hospital name" aria-label="Hospital name"><button class="btn" id="sq" style="white-space:nowrap">Search</button></div>
+  <p class="err" id="e1"></p>
+  <div id="hres"></div>
+  <p class="chosen" id="chosen"></p>
+</section>
 
-    <div>
-      <div class="bill" aria-label="Sample hospital bill">
-        <div class="bill-head"><b>Sunrise Multispeciality Hospital</b><span>Final bill<br>Lap. cholecystectomy, 3 days</span></div>
-        <div class="cols"><span>Item</span><span>Billed</span><span>Pays</span></div>
-        <ol id="lines"></ol>
-        <div class="note" id="note" aria-live="polite"><b>Nothing marked yet</b>Press “Mark up the sample bill” to see what the insurer is likely to cut.</div>
-        <div class="verdict" id="verdict">Billed <strong id="vb"></strong></div>
-        <div class="legend">
-          <span><i style="background:var(--hl-cap)"></i>Cut by room-rent cap</span>
-          <span><i style="background:var(--hl-np)"></i>Not payable</span>
-          <span><i style="background:var(--hl-dup)"></i>Billed twice</span>
-        </div>
-        <p class="fine">Sample bill and a made-up policy with a ₹4,000 a day room cap. Real results depend on your policy.</p>
-      </div>
-    </div>
+<section>
+  <h2>2. Enter the bill</h2>
+  <p class="sub">Copy each line from your final bill. Choose the type so the right rule is applied.</p>
+  <div id="rows"></div>
+  <button class="btn ghost" id="add">Add a line</button>
+  <div class="pol">
+    <div><label for="cap">Room rent limit per day (₹)</label><input id="cap" type="number" min="1" inputmode="numeric"></div>
+    <div><label for="days">Days in room</label><input id="days" type="number" min="1" inputmode="numeric"></div>
   </div>
+  <button class="btn" id="chk">Check this bill</button>
+  <p class="err" id="e2"></p>
+  <div id="out"></div>
+</section>
 
-  <section>
-    <h2>Where claims lose money</h2>
-    <dl class="cuts">
-      <div><i style="background:var(--hl-cap)"></i><dt>Room costs more than your cap</dt><dd>Insurers shrink surgeon, nursing and theatre charges in the same ratio, not just the room line.</dd></div>
-      <div><i style="background:var(--hl-np)"></i><dt>Items on the non-payable list</dt><dd>Gloves, admission kits and similar items are billed to you even on a cashless claim.</dd></div>
-      <div><i style="background:var(--hl-dup)"></i><dt>The same charge twice</dt><dd>A repeated scan or test is easy to miss on a long bill. Get it removed before you pay.</dd></div>
-      <div><i style="background:var(--pen)"></i><dt>Missing or mismatched papers</dt><dd>A discharge summary that disagrees with the bill can hold up the whole claim.</dd></div>
-    </dl>
-  </section>
+<section class="mine" id="mine" hidden><h2>My checked bills</h2><div id="mlist"></div></section>
 
-  <section id="how">
-    <h2>Three steps at the discharge counter</h2>
-    <ol class="steps">
-      <li><b>Photograph the bill and discharge summary</b><span>Your phone camera is enough. Handwritten lines are read too.</span></li>
-      <li><b>Add your policy</b><span>Upload the PDF. We pull out the room cap, sub-limits and exclusions.</span></li>
-      <li><b>Get your marked-up copy</b><span>Each cut shows the clause behind it and what to ask the hospital to change.</span></li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>What Fineprint is not</h2>
-    <p class="honest"><strong>It gives an estimate, not a decision.</strong> Your insurer has the final say. Fineprint doesn’t file claims, doesn’t give legal advice, and tells you plainly when it can’t read a line.</p>
-  </section>
-  </main>
-
-  <footer>Fineprint is a student project concept. All figures on this page are illustrative.</footer>
+<footer>Fineprint gives an estimate, not a decision. Your insurer has the final say. It does not file claims or give legal advice.</footer>
 </div>
 
+<dialog id="dlg">
+  <h3 id="dt"></h3>
+  <input id="an" placeholder="Your name" autocomplete="name">
+  <input id="ae" type="email" placeholder="Email" autocomplete="email">
+  <input id="ap" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
+  <p class="err" id="ae2"></p>
+  <div class="row"><button class="btn" id="asub">Continue</button><button class="btn ghost" id="acl" style="color:#16263a;border-color:#16263a">Cancel</button></div>
+  <p style="margin:12px 0 0"><button class="link" id="atg"></button></p>
+</dialog>
+
 <script>
-(async()=>{
-const RATIO = 4000/7000;
-let items = [
- {n:'Room rent, deluxe, 3 days', b:21000, t:'cap', p:12000, h:'Room rent is above your cap', x:'Your policy pays up to ₹4,000 a day. This room is ₹7,000 a day, so the room line is cut to ₹12,000. A room within the cap would avoid every cut marked in yellow.'},
- {n:'Surgeon’s fee', b:60000, t:'cap', r:1, h:'Reduced in proportion', x:'Because the room is above the cap, related charges are usually scaled by the same ratio: 4,000 ÷ 7,000, about 57%.'},
- {n:'Operation theatre', b:35000, t:'cap', r:1, h:'Reduced in proportion', x:'Theatre charges fall under the same proportionate deduction as the surgeon’s fee.'},
- {n:'Anaesthetist’s fee', b:18000, t:'cap', r:1, h:'Reduced in proportion', x:'Anaesthesia is scaled by the same room-rent ratio.'},
- {n:'Nursing, 3 days', b:6000, t:'cap', r:1, h:'Reduced in proportion', x:'Nursing charges are scaled by the same room-rent ratio.'},
- {n:'Pharmacy', b:22400, t:'ok', h:'Nothing to flag', x:'This line matches the stay and is payable under the policy.'},
- {n:'Blood tests', b:6200, t:'ok', h:'Nothing to flag', x:'Covered diagnostics related to the admission.'},
- {n:'Ultrasound abdomen', b:2400, t:'ok', h:'Nothing to flag', x:'Covered diagnostics related to the admission.'},
- {n:'Ultrasound abdomen', b:2400, t:'dup', p:0, h:'Billed twice', x:'The same scan appears twice on the same day. Ask the hospital to remove one before you pay. Insurers will not pay both.'},
- {n:'Gloves, masks, shoe covers', b:4800, t:'np', p:0, h:'Not payable', x:'Consumables like these sit on the standard non-payable list, so the insurer pays nothing. Ask whether they are already part of the surgery charge.'},
- {n:'Admission kit', b:1500, t:'np', p:0, h:'Not payable', x:'Admission and registration items are normally treated as non-payable.'}
-];
-try{const r=await fetch('/api/sample');if(r.ok){items=(await r.json()).items;}}catch(e){}
-items.forEach(i=>{ if(i.pay!==undefined) return; i.pay = i.r ? Math.round(i.b*RATIO) : (i.p!==undefined ? i.p : i.b); });
-const fmt = n => '₹' + n.toLocaleString('en-IN');
-const total = items.reduce((a,i)=>a+i.b,0);
-const paid = items.reduce((a,i)=>a+i.pay,0);
+const $=s=>document.querySelector(s);
+const fmt=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+async function api(url,body){
+  const r=await fetch(url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:'Something went wrong. Check what you entered.');
+  return d;
+}
+let user=null,hospital=null,mode='login';
 
-const ol = document.getElementById('lines');
-const note = document.getElementById('note');
-const verdict = document.getElementById('verdict');
-document.getElementById('vb').textContent = fmt(total);
-
-items.forEach((it,idx)=>{
-  const li = document.createElement('li');
-  const b = document.createElement('button');
-  b.className = 'line ' + it.t; b.type = 'button';
-  b.innerHTML = '<span></span><span class="billed"></span><span class="pays"></span>';
-  b.children[0].textContent = it.n;
-  b.children[1].textContent = it.b.toLocaleString('en-IN');
-  b.children[2].textContent = it.pay.toLocaleString('en-IN');
-  b.addEventListener('click',()=>show(idx));
-  li.appendChild(b); ol.appendChild(li);
-});
-const btns = [...ol.querySelectorAll('.line')];
-
-function show(i){
-  const it = items[i];
-  btns.forEach(x=>x.classList.remove('sel')); btns[i].classList.add('sel');
-  if(!marked){ return; }
-  const diff = it.b - it.pay;
-  note.innerHTML = '<b></b><span></span>';
-  note.children[0].textContent = it.h + (diff>0 ? ' (−' + fmt(diff) + ')' : '');
-  note.children[1].textContent = it.x;
+function nav(){
+  const n=$('#nav');n.innerHTML='';
+  if(user){
+    n.append(el('span','',user.name));
+    const b=el('button','btn ghost','Sign out');b.onclick=async()=>{await api('/api/logout',{});user=null;nav();mine()};n.append(b);
+  }else{
+    const a=el('button','btn ghost','Sign in');a.onclick=()=>auth('login');
+    const b=el('button','btn','Create account');b.onclick=()=>auth('signup');n.append(a,b);
+  }
+}
+function auth(m){
+  mode=m;$('#dt').textContent=m==='signup'?'Create your account':'Sign in';
+  $('#an').hidden=m!=='signup';$('#ae2').textContent='';
+  $('#atg').textContent=m==='signup'?'I already have an account':'Create a new account';
+  $('#dlg').showModal();
+}
+$('#atg').onclick=()=>auth(mode==='signup'?'login':'signup');
+$('#acl').onclick=()=>$('#dlg').close();
+$('#asub').onclick=async()=>{
+  try{
+    const body={email:$('#ae').value,password:$('#ap').value};
+    if(mode==='signup')body.name=$('#an').value;
+    user=(await api(mode==='signup'?'/api/signup':'/api/login',body)).user;
+    $('#dlg').close();$('#ap').value='';nav();mine();
+  }catch(e){$('#ae2').textContent=e.message}
+};
+async function mine(){
+  const s=$('#mine');
+  if(!user){s.hidden=true;return}
+  try{
+    const d=await api('/api/bills');s.hidden=false;const l=$('#mlist');l.innerHTML='';
+    if(!d.bills.length)l.append(el('p','sub','No bills checked yet. Your checks will appear here.'));
+    d.bills.forEach(b=>{const r=el('div');r.append(el('span','',b.hospital+' · '+new Date(b.created*1000).toLocaleDateString('en-IN')),el('span','',fmt(b.billed)+' billed, insurer pays about '+fmt(b.pays)));l.append(r)});
+  }catch(e){}
 }
 
-let marked = false;
-const go = document.getElementById('go');
-go.addEventListener('click',()=>{
-  if(marked) return;
-  marked = true; go.disabled = true; go.textContent = 'Marked up';
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  btns.forEach((b,i)=>{
-    const it = items[i];
-    const flagged = it.t !== 'ok';
-    setTimeout(()=>{
-      b.classList.add('marked');
-      if(it.pay < it.b) b.classList.add('cut');
-    }, reduce ? 0 : i*180);
+async function search(){
+  const e=$('#e1'),box=$('#hres');e.textContent='';box.innerHTML='';
+  $('#sq').disabled=true;$('#sq').textContent='Searching';
+  try{
+    const d=await api('/api/hospitals?q='+encodeURIComponent($('#q').value));
+    if(!d.results.length)e.textContent='No hospital found with that name. Try fewer words, or the city name.';
+    d.results.forEach(h=>{
+      const b=el('button','pick');b.type='button';
+      b.append(el('b','',h.name),el('small','',h.addr));
+      const s=h.stats.bills?h.stats.bills+' bill(s) checked here. Insurers cut about '+h.stats.avg_cut_pct+'% on average.':'No bills checked here yet on Fineprint.';
+      b.append(el('span','st',s));
+      if(h.phone||h.website)b.append(el('small','',[h.phone,h.website].filter(Boolean).join(' · ')));
+      b.onclick=()=>{hospital={name:h.name,addr:h.addr};document.querySelectorAll('.pick').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#chosen').textContent='Selected: '+h.name};
+      box.append(b);
+    });
+  }catch(x){e.textContent=x.message}
+  $('#sq').disabled=false;$('#sq').textContent='Search';
+}
+$('#sq').onclick=search;$('#q').onkeydown=e=>{if(e.key==='Enter')search()};
+
+function addRow(){
+  const r=el('div','lines');
+  const n=el('input');n.placeholder='Item name';n.setAttribute('aria-label','Item name');
+  const a=el('input');a.type='number';a.min=1;a.placeholder='Amount ₹';a.setAttribute('aria-label','Amount');
+  const s=el('select');[['other','Other'],['room','Room rent'],['prop','Doctor, theatre, nursing']].forEach(([v,t])=>{const o=el('option','',t);o.value=v;s.append(o)});
+  const x=el('button','x','×');x.type='button';x.setAttribute('aria-label','Remove line');x.onclick=()=>r.remove();
+  r.append(n,a,s,x);$('#rows').append(r);
+}
+$('#add').onclick=addRow;addRow();addRow();
+
+$('#chk').onclick=async()=>{
+  const e=$('#e2');e.textContent='';
+  const items=[...document.querySelectorAll('#rows .lines')].map(r=>{const i=r.querySelectorAll('input'),s=r.querySelector('select');return{n:i[0].value.trim(),b:Math.round(+i[1].value),cat:s.value}}).filter(i=>i.n&&i.b>0);
+  const cap=+$('#cap').value,days=+$('#days').value;
+  if(!items.length){e.textContent='Add at least one bill line with a name and an amount.';return}
+  if(!(cap>0)||!(days>=1)){e.textContent='Enter your room rent limit per day and the number of days in the room.';return}
+  $('#chk').disabled=true;
+  try{show(await api('/api/check',{items,policy:{room_cap_per_day:cap,room_days:days},hospital}))}
+  catch(x){e.textContent=x.message}
+  $('#chk').disabled=false;
+};
+
+function show(d){
+  const out=$('#out');out.innerHTML='';
+  const bill=el('div','bill');bill.append(el('div','bill-head',(hospital?hospital.name:'Your bill')));
+  const c=el('div','cols');c.append(el('span','','Item'),el('span','','Billed'),el('span','','Pays'));bill.append(c);
+  const note=el('div','note');note.append(el('b','','Tap a line'),el('span','','See why the insurer may cut it.'));
+  d.items.forEach(it=>{
+    const b=el('button','line '+it.t+(it.pay<it.b?' cut':''));b.type='button';
+    b.append(el('span','',it.n),el('span','billed',it.b.toLocaleString('en-IN')),el('span','pays',it.pay.toLocaleString('en-IN')));
+    b.onclick=()=>{bill.querySelectorAll('.line').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');note.innerHTML='';const diff=it.b-it.pay;note.append(el('b','',it.h+(diff>0?' (−'+fmt(diff)+')':'')),el('span','',it.x))};
+    bill.append(b);
   });
-  setTimeout(()=>{
-    verdict.innerHTML = 'Insurer pays about <strong></strong><br><span class="you"></span>';
-    verdict.querySelector('strong').textContent = fmt(paid) + ' of ' + fmt(total);
-    verdict.querySelector('.you').textContent = 'You pay about ' + fmt(total-paid) + ' yourself';
-    show(0);
-  }, reduce ? 0 : items.length*180);
-});
-})();
+  bill.append(note);
+  const v=el('div','verdict');v.append('Insurer pays about ',el('strong','',fmt(d.insurer_pays)+' of '+fmt(d.billed)),document.createElement('br'),el('span','you','You pay about '+fmt(d.you_pay)+' yourself'));
+  bill.append(v);
+  const lg=el('div','legend');[['cap','Cut by room-rent limit'],['np','Not payable'],['dup','Billed twice']].forEach(([k,t])=>{const s=el('span');const i=el('i');i.style.background='var(--hl-'+k+')';s.append(i,t);lg.append(s)});
+  bill.append(lg);
+  bill.append(el('p','',d.saved?'Saved to My checked bills.':'Sign in or create an account to save this check.'));
+  out.append(bill);mine();
+}
+api('/api/me').then(d=>{user=d.user;nav();mine()}).catch(()=>nav());
 </script>
 </body>
 </html>
