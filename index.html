@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fineprint: see what your insurer won’t pay before you pay the hospital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#d9e5e0; --ink:#16263a; --muted:#4a5c6c; --rule:#9fb3aa;
+  --paper:#fcfcf7; --pink:#16263a; --pen:#c4301c;
+  --hl-cap:#ffe45c; --hl-np:#ffb3c1; --hl-dup:#9fe3f2;
+  --btn-bg:#16263a; --btn-fg:#fcfcf7;
+  --sans:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Spline Sans Mono",ui-monospace,Menlo,Consolas,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0e1b19;--ink:#e4efea;--muted:#9bb0a8;--rule:#2f4540;--btn-bg:#e4efea;--btn-fg:#0e1b19;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#0e1b19;--ink:#e4efea;--muted:#9bb0a8;--rule:#2f4540;--btn-bg:#e4efea;--btn-fg:#0e1b19;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;min-height:100%}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+header{display:flex;justify-content:space-between;align-items:baseline;padding:22px 0}
+.mark{font-weight:800;font-size:1.35rem;letter-spacing:-.02em}
+.mark span{background:linear-gradient(var(--hl-cap),var(--hl-cap)) 0 88%/100% 38% no-repeat;color:#16263a;padding:0 3px}
+header a{color:var(--ink);font-size:.95rem}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);gap:48px;align-items:start;padding:28px 0 72px}
+h1{font-size:clamp(2.3rem,5.2vw,4rem);line-height:1.02;letter-spacing:-.035em;font-weight:800;margin:0 0 20px;max-width:13ch}
+.lede{font-size:1.15rem;max-width:34ch;color:var(--muted);margin:0 0 28px}
+.btn{font:inherit;font-weight:600;background:var(--btn-bg);color:var(--btn-fg);border:0;border-radius:3px;padding:14px 22px;cursor:pointer}
+.btn:focus-visible,.line:focus-visible,a:focus-visible{outline:3px solid var(--pen);outline-offset:3px}
+.btn[disabled]{opacity:.55;cursor:default}
+.hint{margin:14px 0 0;font-size:.9rem;color:var(--muted)}
+
+/* the bill */
+.bill{background:var(--paper);color:#16263a;font-family:var(--mono);font-size:13px;line-height:1.35;
+  padding:22px 18px 26px;transform:rotate(-1deg);box-shadow:0 1px 0 #0003,0 18px 30px -18px #0007;
+  border-bottom:10px solid transparent;
+  background-image:linear-gradient(135deg,var(--bg) 25%,transparent 25%),linear-gradient(225deg,var(--bg) 25%,transparent 25%);
+  background-size:14px 14px;background-position:0 100%;background-repeat:repeat-x;background-color:var(--paper)}
+.bill-head{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #16263a66;padding-bottom:10px;margin-bottom:6px}
+.bill-head b{font-weight:500;font-size:14px}
+.bill-head span{color:#4a5c6c;text-align:right}
+.cols,.line{display:grid;grid-template-columns:minmax(0,1fr) 74px 74px;gap:8px;align-items:baseline}
+.cols{color:#4a5c6c;padding:4px 6px}
+.cols span:nth-child(n+2),.line span:nth-child(n+2){text-align:right}
+ol{list-style:none;margin:0;padding:0}
+.line{width:100%;font:inherit;color:inherit;text-align:left;background:none;border:0;border-bottom:1px dotted #16263a40;padding:8px 6px;cursor:pointer;
+  background-image:linear-gradient(var(--c,transparent),var(--c,transparent));background-repeat:no-repeat;background-size:0% 100%;
+  transition:background-size .55s cubic-bezier(.3,.7,.2,1)}
+.line.marked{background-size:100% 100%}
+.line.cap{--c:var(--hl-cap)} .line.np{--c:var(--hl-np)} .line.dup{--c:var(--hl-dup)}
+.line.sel{box-shadow:inset 3px 0 0 var(--pen)}
+.pays{visibility:hidden;color:var(--pen);font-weight:500}
+.marked .pays{visibility:visible}
+.marked.cut .billed{text-decoration:line-through;text-decoration-color:var(--pen);text-decoration-thickness:2px}
+.note{margin:14px 0 0;padding:10px 12px;border-left:3px solid var(--pen);background:#c4301c12;font-family:var(--sans);font-size:14px;line-height:1.45;min-height:5.2em}
+.note b{display:block;margin-bottom:2px}
+.verdict{margin-top:14px;border-top:2px solid #16263a;padding-top:10px;font-family:var(--sans);font-size:15px}
+.verdict strong{font-size:1.5rem;letter-spacing:-.02em}
+.verdict .you{color:var(--pen);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-family:var(--sans);font-size:12.5px;color:#4a5c6c}
+.legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px}
+.fine{margin:10px 0 0;font-family:var(--sans);font-size:12px;color:#4a5c6c}
+
+/* sections */
+section{border-top:1px solid var(--rule);padding:56px 0}
+h2{font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.03em;line-height:1.1;margin:0 0 28px;font-weight:800;max-width:20ch}
+.cuts{display:grid;grid-template-columns:1fr 1fr;gap:0 48px;margin:0}
+.cuts div{display:grid;grid-template-columns:18px 1fr;gap:0 14px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.cuts dt{font-weight:600;grid-column:2}
+.cuts dd{margin:2px 0 0;grid-column:2;color:var(--muted);max-width:44ch}
+.cuts i{grid-column:1;grid-row:1/3;width:18px;height:18px;margin-top:5px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;counter-reset:s;padding:0}
+.steps li{counter-increment:s;border-top:4px solid var(--ink);padding-top:14px}
+.steps li::before{content:counter(s);display:block;font-weight:800;font-size:2.6rem;line-height:1;letter-spacing:-.04em;margin-bottom:10px}
+.steps b{display:block;margin-bottom:4px}
+.steps span{color:var(--muted)}
+.honest{max-width:62ch;color:var(--muted)}
+.honest strong{color:var(--ink)}
+footer{padding:28px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--rule)}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;gap:36px;padding-bottom:48px}
+  .cuts{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr;gap:26px}
+  .bill{transform:none}
+}
+@media (max-width:420px){.cols,.line{grid-template-columns:minmax(0,1fr) 62px 62px;gap:4px}.bill{font-size:12px;padding:18px 12px 24px}}
+@media (prefers-reduced-motion:reduce){.line{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark"><span>Fineprint</span></div>
+    <a href="#how">How it works</a>
+  </header>
+
+  <main>
+  <div class="hero">
+    <div>
+      <h1>See what your insurer won’t pay before you pay the hospital.</h1>
+      <p class="lede">Photograph the final bill, add your policy, and get the bill back with every cut marked and explained.</p>
+      <button class="btn" id="go">Mark up the sample bill</button>
+      <p class="hint" id="hint">Then tap any line to see why it was marked.</p>
+    </div>
+
+    <div>
+      <div class="bill" aria-label="Sample hospital bill">
+        <div class="bill-head"><b>Sunrise Multispeciality Hospital</b><span>Final bill<br>Lap. cholecystectomy, 3 days</span></div>
+        <div class="cols"><span>Item</span><span>Billed</span><span>Pays</span></div>
+        <ol id="lines"></ol>
+        <div class="note" id="note" aria-live="polite"><b>Nothing marked yet</b>Press “Mark up the sample bill” to see what the insurer is likely to cut.</div>
+        <div class="verdict" id="verdict">Billed <strong id="vb"></strong></div>
+        <div class="legend">
+          <span><i style="background:var(--hl-cap)"></i>Cut by room-rent cap</span>
+          <span><i style="background:var(--hl-np)"></i>Not payable</span>
+          <span><i style="background:var(--hl-dup)"></i>Billed twice</span>
+        </div>
+        <p class="fine">Sample bill and a made-up policy with a ₹4,000 a day room cap. Real results depend on your policy.</p>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Where claims lose money</h2>
+    <dl class="cuts">
+      <div><i style="background:var(--hl-cap)"></i><dt>Room costs more than your cap</dt><dd>Insurers shrink surgeon, nursing and theatre charges in the same ratio, not just the room line.</dd></div>
+      <div><i style="background:var(--hl-np)"></i><dt>Items on the non-payable list</dt><dd>Gloves, admission kits and similar items are billed to you even on a cashless claim.</dd></div>
+      <div><i style="background:var(--hl-dup)"></i><dt>The same charge twice</dt><dd>A repeated scan or test is easy to miss on a long bill. Get it removed before you pay.</dd></div>
+      <div><i style="background:var(--pen)"></i><dt>Missing or mismatched papers</dt><dd>A discharge summary that disagrees with the bill can hold up the whole claim.</dd></div>
+    </dl>
+  </section>
+
+  <section id="how">
+    <h2>Three steps at the discharge counter</h2>
+    <ol class="steps">
+      <li><b>Photograph the bill and discharge summary</b><span>Your phone camera is enough. Handwritten lines are read too.</span></li>
+      <li><b>Add your policy</b><span>Upload the PDF. We pull out the room cap, sub-limits and exclusions.</span></li>
+      <li><b>Get your marked-up copy</b><span>Each cut shows the clause behind it and what to ask the hospital to change.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>What Fineprint is not</h2>
+    <p class="honest"><strong>It gives an estimate, not a decision.</strong> Your insurer has the final say. Fineprint doesn’t file claims, doesn’t give legal advice, and tells you plainly when it can’t read a line.</p>
+  </section>
+  </main>
+
+  <footer>Fineprint is a student project concept. All figures on this page are illustrative.</footer>
+</div>
+
+<script>
+(async()=>{
+const RATIO = 4000/7000;
+let items = [
+ {n:'Room rent, deluxe, 3 days', b:21000, t:'cap', p:12000, h:'Room rent is above your cap', x:'Your policy pays up to ₹4,000 a day. This room is ₹7,000 a day, so the room line is cut to ₹12,000. A room within the cap would avoid every cut marked in yellow.'},
+ {n:'Surgeon’s fee', b:60000, t:'cap', r:1, h:'Reduced in proportion', x:'Because the room is above the cap, related charges are usually scaled by the same ratio: 4,000 ÷ 7,000, about 57%.'},
+ {n:'Operation theatre', b:35000, t:'cap', r:1, h:'Reduced in proportion', x:'Theatre charges fall under the same proportionate deduction as the surgeon’s fee.'},
+ {n:'Anaesthetist’s fee', b:18000, t:'cap', r:1, h:'Reduced in proportion', x:'Anaesthesia is scaled by the same room-rent ratio.'},
+ {n:'Nursing, 3 days', b:6000, t:'cap', r:1, h:'Reduced in proportion', x:'Nursing charges are scaled by the same room-rent ratio.'},
+ {n:'Pharmacy', b:22400, t:'ok', h:'Nothing to flag', x:'This line matches the stay and is payable under the policy.'},
+ {n:'Blood tests', b:6200, t:'ok', h:'Nothing to flag', x:'Covered diagnostics related to the admission.'},
+ {n:'Ultrasound abdomen', b:2400, t:'ok', h:'Nothing to flag', x:'Covered diagnostics related to the admission.'},
+ {n:'Ultrasound abdomen', b:2400, t:'dup', p:0, h:'Billed twice', x:'The same scan appears twice on the same day. Ask the hospital to remove one before you pay. Insurers will not pay both.'},
+ {n:'Gloves, masks, shoe covers', b:4800, t:'np', p:0, h:'Not payable', x:'Consumables like these sit on the standard non-payable list, so the insurer pays nothing. Ask whether they are already part of the surgery charge.'},
+ {n:'Admission kit', b:1500, t:'np', p:0, h:'Not payable', x:'Admission and registration items are normally treated as non-payable.'}
+];
+try{const r=await fetch('/api/sample');if(r.ok){items=(await r.json()).items;}}catch(e){}
+items.forEach(i=>{ if(i.pay!==undefined) return; i.pay = i.r ? Math.round(i.b*RATIO) : (i.p!==undefined ? i.p : i.b); });
+const fmt = n => '₹' + n.toLocaleString('en-IN');
+const total = items.reduce((a,i)=>a+i.b,0);
+const paid = items.reduce((a,i)=>a+i.pay,0);
+
+const ol = document.getElementById('lines');
+const note = document.getElementById('note');
+const verdict = document.getElementById('verdict');
+document.getElementById('vb').textContent = fmt(total);
+
+items.forEach((it,idx)=>{
+  const li = document.createElement('li');
+  const b = document.createElement('button');
+  b.className = 'line ' + it.t; b.type = 'button';
+  b.innerHTML = '<span></span><span class="billed"></span><span class="pays"></span>';
+  b.children[0].textContent = it.n;
+  b.children[1].textContent = it.b.toLocaleString('en-IN');
+  b.children[2].textContent = it.pay.toLocaleString('en-IN');
+  b.addEventListener('click',()=>show(idx));
+  li.appendChild(b); ol.appendChild(li);
+});
+const btns = [...ol.querySelectorAll('.line')];
+
+function show(i){
+  const it = items[i];
+  btns.forEach(x=>x.classList.remove('sel')); btns[i].classList.add('sel');
+  if(!marked){ return; }
+  const diff = it.b - it.pay;
+  note.innerHTML = '<b></b><span></span>';
+  note.children[0].textContent = it.h + (diff>0 ? ' (−' + fmt(diff) + ')' : '');
+  note.children[1].textContent = it.x;
+}
+
+let marked = false;
+const go = document.getElementById('go');
+go.addEventListener('click',()=>{
+  if(marked) return;
+  marked = true; go.disabled = true; go.textContent = 'Marked up';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  btns.forEach((b,i)=>{
+    const it = items[i];
+    const flagged = it.t !== 'ok';
+    setTimeout(()=>{
+      b.classList.add('marked');
+      if(it.pay < it.b) b.classList.add('cut');
+    }, reduce ? 0 : i*180);
+  });
+  setTimeout(()=>{
+    verdict.innerHTML = 'Insurer pays about <strong></strong><br><span class="you"></span>';
+    verdict.querySelector('strong').textContent = fmt(paid) + ' of ' + fmt(total);
+    verdict.querySelector('.you').textContent = 'You pay about ' + fmt(total-paid) + ' yourself';
+    show(0);
+  }, reduce ? 0 : items.length*180);
+});
+})();
+</script>
+</body>
+</html>
