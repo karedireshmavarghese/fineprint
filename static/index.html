@@ -62,6 +62,13 @@ dialog::backdrop{background:#0008}
 dialog h3{margin:0 0 12px;font-size:1.3rem}
 dialog input{margin-bottom:10px;color:#16263a;background:#fff}
 dialog .link{background:none;border:0;color:#16263a;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+a{color:var(--ink)}
+.tabs{display:flex;gap:8px;margin:14px 0 6px;flex-wrap:wrap}
+.tabs .btn.on{background:var(--pen);color:#fff}
+.place{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.place small{display:block;color:var(--muted)}
+.place>span:last-child{text-align:right;white-space:nowrap}
+.med{margin-top:14px;padding:14px;background:var(--field);border:1px solid var(--rule);border-radius:3px}
 footer{padding:24px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--rule)}
 @media (max-width:640px){.lines{grid-template-columns:1fr 1fr 36px}.lines select{grid-column:1/3}.row{flex-direction:column}}
 </style>
@@ -79,6 +86,12 @@ footer{padding:24px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px so
   <p class="err" id="e1"></p>
   <div id="hres"></div>
   <p class="chosen" id="chosen"></p>
+  <div id="near" hidden>
+    <p class="sub" style="margin:14px 0 0">Within 1.5 km of this hospital:</p>
+    <div class="tabs"><button class="btn ghost" data-k="stay">Stay for family</button><button class="btn ghost" data-k="food">Food</button><button class="btn ghost" data-k="pharmacy">Medical shops</button></div>
+    <p class="err" id="e3"></p>
+    <div id="nlist"></div>
+  </div>
 </section>
 
 <section>
@@ -93,6 +106,14 @@ footer{padding:24px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px so
   <button class="btn" id="chk">Check this bill</button>
   <p class="err" id="e2"></p>
   <div id="out"></div>
+</section>
+
+<section>
+  <h2>3. Cheaper medicines</h2>
+  <p class="sub">Type a medicine name from your bill. We show its active ingredient, so you can ask for the same salt as a generic.</p>
+  <div class="row"><input id="mq" placeholder="Medicine name from your bill" aria-label="Medicine name"><button class="btn" id="mb" style="white-space:nowrap">Find generic</button></div>
+  <p class="err" id="e4"></p>
+  <div id="mout"></div>
 </section>
 
 <section class="mine" id="mine" hidden><h2>My checked bills</h2><div id="mlist"></div></section>
@@ -170,7 +191,7 @@ async function search(){
       const s=h.stats.bills?h.stats.bills+' bill(s) checked here. Insurers cut about '+h.stats.avg_cut_pct+'% on average.':'No bills checked here yet on Fineprint.';
       b.append(el('span','st',s));
       if(h.phone||h.website)b.append(el('small','',[h.phone,h.website].filter(Boolean).join(' · ')));
-      b.onclick=()=>{hospital={name:h.name,addr:h.addr};document.querySelectorAll('.pick').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#chosen').textContent='Selected: '+h.name};
+      b.onclick=()=>{hospital={name:h.name,addr:h.addr,lat:+h.lat,lon:+h.lon};openNear();document.querySelectorAll('.pick').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#chosen').textContent='Selected: '+h.name};
       box.append(b);
     });
   }catch(x){e.textContent=x.message}
@@ -219,6 +240,40 @@ function show(d){
   bill.append(el('p','',d.saved?'Saved to My checked bills.':'Sign in or create an account to save this check.'));
   out.append(bill);mine();
 }
+const gmap=(la,lo)=>'https://www.google.com/maps/search/?api=1&query='+la+','+lo;
+function openNear(){$('#near').hidden=false;loadNear('stay')}
+async function loadNear(k){
+  document.querySelectorAll('.tabs .btn').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  const l=$('#nlist'),e=$('#e3');l.innerHTML='';e.textContent='';
+  try{
+    const d=await api('/api/nearby?lat='+hospital.lat+'&lon='+hospital.lon+'&kind='+k);
+    if(!d.results.length)l.append(el('p','sub','Nothing found within 1.5 km on OpenStreetMap.'));
+    d.results.forEach(p=>{
+      const r=el('div','place'),a=el('span');a.append(el('b','',p.name),el('small','',p.type+(p.hours?' · '+p.hours:'')+(p.phone?' · '+p.phone:'')));
+      const m=el('span'),lk=el('a','','Map');lk.href=gmap(p.lat,p.lon);lk.target='_blank';lk.rel='noopener';
+      m.append((p.km<1?Math.round(p.km*1000)+' m':p.km.toFixed(1)+' km')+' · ',lk);r.append(a,m);l.append(r);
+    });
+    if(k==='pharmacy'){const p=el('p','sub');const lk=el('a','','Find Jan Aushadhi Kendras (low-cost generic shops) near this hospital');lk.href='https://www.google.com/maps/search/Jan+Aushadhi+Kendra/@'+hospital.lat+','+hospital.lon+',15z';lk.target='_blank';lk.rel='noopener';p.append(lk);l.append(p)}
+  }catch(x){e.textContent=x.message}
+}
+document.querySelectorAll('.tabs .btn').forEach(b=>b.onclick=()=>loadNear(b.dataset.k));
+async function med(){
+  const e=$('#e4'),o=$('#mout');e.textContent='';o.innerHTML='';$('#mb').disabled=true;
+  try{
+    const d=await api('/api/medicine',{name:$('#mq').value});
+    const c=el('div','med');
+    if(!d.known){c.append(el('p','','We could not identify this medicine. Check the spelling or ask the pharmacist.'))}
+    else{
+      c.append(el('b','',(d.generic_name||'Same-salt generic')+(d.form?' ('+d.form+')':'')));
+      (d.salts||[]).forEach(s=>c.append(el('div','',s.name+(s.strength?' '+s.strength:''))));
+      c.append(el('p','sub','Ask your doctor or pharmacist for a generic with the same salt and strength. Generics are usually cheaper. Do not switch a prescribed medicine without asking your doctor.'));
+      const lk=el('a','','Compare at Jan Aushadhi');lk.href='https://janaushadhi.gov.in';lk.target='_blank';lk.rel='noopener';c.append(lk);
+    }
+    o.append(c);
+  }catch(x){e.textContent=x.message}
+  $('#mb').disabled=false;
+}
+$('#mb').onclick=med;$('#mq').onkeydown=e=>{if(e.key==='Enter')med()};
 api('/api/me').then(d=>{user=d.user;nav();mine()}).catch(()=>nav());
 </script>
 </body>
