@@ -87,7 +87,7 @@ footer{padding:24px 0 40px;font-size:.88rem;color:var(--muted);border-top:1px so
   <div id="hres"></div>
   <p class="chosen" id="chosen"></p>
   <div id="near" hidden>
-    <p class="sub" style="margin:14px 0 0">Within 1.5 km of this hospital:</p>
+    <p class="sub" style="margin:14px 0 0">Nearest places to this hospital:</p>
     <div class="tabs"><button class="btn ghost" data-k="stay">Stay for family</button><button class="btn ghost" data-k="food">Food</button><button class="btn ghost" data-k="pharmacy">Medical shops</button></div>
     <p class="err" id="e3"></p>
     <div id="nlist"></div>
@@ -247,7 +247,7 @@ async function loadNear(k){
   const l=$('#nlist'),e=$('#e3');l.innerHTML='';e.textContent='';
   try{
     const d=await api('/api/nearby?lat='+hospital.lat+'&lon='+hospital.lon+'&kind='+k);
-    if(!d.results.length)l.append(el('p','sub','Nothing found within 1.5 km on OpenStreetMap.'));
+    if(!d.results.length)l.append(el('p','sub','Nothing found within '+(d.radius_km||1.5)+' km on OpenStreetMap.'));
     d.results.forEach(p=>{
       const r=el('div','place'),a=el('span');a.append(el('b','',p.name),el('small','',p.type+(p.hours?' · '+p.hours:'')+(p.phone?' · '+p.phone:'')));
       const m=el('span'),lk=el('a','','Map');lk.href=gmap(p.lat,p.lon);lk.target='_blank';lk.rel='noopener';
