@@ -205,6 +205,7 @@ async def extract(file: UploadFile = File(...)):
         raise HTTPException(422, "Could not read the bill. Try a clearer photo.")
 
 
+
 import math
 UA = {"User-Agent": "Fineprint-hackathon/1.0"}
 KINDS = {
@@ -224,15 +225,23 @@ def km(a1, o1, a2, o2):
     return 12742 * math.asin(math.sqrt(h))
 
 
+NOM_TERMS = {"stay": ["hotel", "lodge", "guest house"], "food": ["restaurant", "cafe"], "pharmacy": ["pharmacy"]}
+
+
 def overpass(q):
     for url in MIRRORS:
         try:
             r = httpx.post(url, data={"data": q}, headers=UA, timeout=25)
             r.raise_for_status()
             return r.json()["elements"]
-        except Exception:
-            continue
+        except Exception as e:
+            print("overpass failed:", url, repr(e)[:150])
     return None
+
+
+def place(name, typ, lat, lon, la, lo, phone=None, hours=None):
+    return {"name": name, "type": typ.replace("_", " "), "km": round(km(lat, lon, la, lo), 2),
+            "phone": phone, "hours": hours, "lat": la, "lon": lo}
 
 
 def search_near(lat, lon, kind, radius):
@@ -247,9 +256,37 @@ def search_near(lat, lon, kind, radius):
         if la is None or lo is None:
             continue
         t = e["tags"]
-        out.append({"name": t["name"], "type": (t.get("tourism") or t.get("amenity") or "").replace("_", " "),
-                    "km": round(km(lat, lon, la, lo), 2), "phone": t.get("phone") or t.get("contact:phone"),
-                    "hours": t.get("opening_hours"), "lat": la, "lon": lo})
+        out.append(place(t["name"], t.get("tourism") or t.get("amenity") or "", lat, lon, la, lo,
+                         t.get("phone") or t.get("contact:phone"), t.get("opening_hours")))
+    out.sort(key=lambda x: x["km"])
+    return out[:10]
+
+
+def nominatim_near(lat, lon, kind, radius):
+    d = radius / 111000
+    dl = d / max(math.cos(lat * math.pi / 180), 0.2)
+    box = f"{lon - dl},{lat + d},{lon + dl},{lat - d}"
+    seen, out, ok = set(), [], False
+    for term in NOM_TERMS[kind]:
+        try:
+            r = httpx.get("https://nominatim.openstreetmap.org/search", timeout=15, headers=UA,
+                          params={"q": term, "viewbox": box, "bounded": 1, "format": "jsonv2", "limit": 20})
+            r.raise_for_status()
+            data = r.json()
+            ok = True
+        except Exception as e:
+            print("nominatim failed:", term, repr(e)[:150])
+            continue
+        for h in data:
+            name = h.get("name") or ""
+            key = (name, h.get("osm_id"))
+            if not name or key in seen:
+                continue
+            seen.add(key)
+            out.append(place(name, h.get("type", ""), lat, lon, float(h["lat"]), float(h["lon"])))
+        time.sleep(1.1)
+    if not ok:
+        return None
     out.sort(key=lambda x: x["km"])
     return out[:10]
 
@@ -266,12 +303,16 @@ def nearby(lat: float, lon: float, kind: str):
     for radius in (1500, 4000):
         found = search_near(lat, lon, kind, radius)
         if found is None:
-            if result is None:
-                raise HTTPException(502, "Nearby search is busy. Tap the tab again in a few seconds.")
             break
         result = {"results": found, "radius_km": radius / 1000}
         if len(found) >= 3:
             break
+    if result is None or not result["results"]:
+        found = nominatim_near(lat, lon, kind, 4000)
+        if found is not None and (found or result is None):
+            result = {"results": found, "radius_km": 4.0}
+    if result is None:
+        raise HTTPException(502, "Nearby search is busy. Tap the tab again in a few seconds.")
     if result["results"]:
         CACHE[key] = (time.time(), result)
     return result
