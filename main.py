@@ -212,6 +212,10 @@ KINDS = {
     "food": '[amenity~"^(restaurant|cafe|fast_food)$"]',
     "pharmacy": '[amenity="pharmacy"]',
 }
+MIRRORS = ["https://overpass-api.de/api/interpreter",
+           "https://overpass.kumi.systems/api/interpreter",
+           "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
+CACHE = {}
 
 
 def km(a1, o1, a2, o2):
@@ -220,17 +224,22 @@ def km(a1, o1, a2, o2):
     return 12742 * math.asin(math.sqrt(h))
 
 
-@app.get("/api/nearby")
-def nearby(lat: float, lon: float, kind: str):
-    if kind not in KINDS:
-        raise HTTPException(422, "Unknown place type.")
-    q = f"[out:json][timeout:20];nwr(around:1500,{lat},{lon}){KINDS[kind]}[name];out center 40;"
-    try:
-        r = httpx.post("https://overpass-api.de/api/interpreter", data={"data": q}, headers=UA, timeout=30)
-        r.raise_for_status()
-        els = r.json()["elements"]
-    except Exception:
-        raise HTTPException(502, "Nearby search is busy. Wait a few seconds and try again.")
+def overpass(q):
+    for url in MIRRORS:
+        try:
+            r = httpx.post(url, data={"data": q}, headers=UA, timeout=25)
+            r.raise_for_status()
+            return r.json()["elements"]
+        except Exception:
+            continue
+    return None
+
+
+def search_near(lat, lon, kind, radius):
+    q = f"[out:json][timeout:20];nwr(around:{radius},{lat},{lon}){KINDS[kind]}[name];out center 60;"
+    els = overpass(q)
+    if els is None:
+        return None
     out = []
     for e in els:
         la = e.get("lat") or (e.get("center") or {}).get("lat")
@@ -242,7 +251,30 @@ def nearby(lat: float, lon: float, kind: str):
                     "km": round(km(lat, lon, la, lo), 2), "phone": t.get("phone") or t.get("contact:phone"),
                     "hours": t.get("opening_hours"), "lat": la, "lon": lo})
     out.sort(key=lambda x: x["km"])
-    return {"results": out[:10]}
+    return out[:10]
+
+
+@app.get("/api/nearby")
+def nearby(lat: float, lon: float, kind: str):
+    if kind not in KINDS:
+        raise HTTPException(422, "Unknown place type.")
+    key = (round(lat, 3), round(lon, 3), kind)
+    hit = CACHE.get(key)
+    if hit and time.time() - hit[0] < 3600:
+        return hit[1]
+    result = None
+    for radius in (1500, 4000):
+        found = search_near(lat, lon, kind, radius)
+        if found is None:
+            if result is None:
+                raise HTTPException(502, "Nearby search is busy. Tap the tab again in a few seconds.")
+            break
+        result = {"results": found, "radius_km": radius / 1000}
+        if len(found) >= 3:
+            break
+    if result["results"]:
+        CACHE[key] = (time.time(), result)
+    return result
 
 
 class Med(BaseModel):
